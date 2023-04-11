@@ -35,6 +35,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -158,7 +159,7 @@ public class OFDDoc implements Closeable {
         if (Files.isDirectory(outPath)) {
             throw new IllegalArgumentException("OFD文件存储路径(outPath)不能是目录");
         }
-        final Path parent = outPath.getParent();
+        final Path parent = outPath.toAbsolutePath().getParent();
         if (parent == null || !Files.exists(parent)) {
             throw new IllegalArgumentException("OFD文件存储路径(outPath)上级目录 [" + parent + "] 不存在");
         }
@@ -168,7 +169,7 @@ public class OFDDoc implements Closeable {
     /**
      * 在指定路径位置上创建一个OFD文件
      *
-     * @param outStream OFD输出流
+     * @param outStream OFD输出流，由调用者负责关闭。
      */
     public OFDDoc(OutputStream outStream) {
         this();
@@ -432,7 +433,7 @@ public class OFDDoc implements Closeable {
         }
         DocDir docDefault = ofdDir.obtainDocDefault();
         Path file = attachment.getFile();
-        docDefault.addResource(file);
+        file = docDefault.addResourceWithPath(file);
         // 构造附件文件存放路径
         ST_Loc loc = docDefault.getRes().getAbsLoc()
                 .cat(file.getFileName().toString());
@@ -440,7 +441,7 @@ public class OFDDoc implements Closeable {
         double size = Files.size(file) / 1024d;
         CT_Attachment ctAttachment = attachment.getAttachment()
                 .setID(String.valueOf(MaxUnitID.incrementAndGet()))
-                .setCreationDate(LocalDate.now())
+                .setCreationDate(LocalDateTime.now())
                 .setSize(size)
                 .setFileLoc(loc);
         ResourceLocator rl = new ResourceLocator(docDefault);

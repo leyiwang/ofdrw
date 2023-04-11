@@ -67,8 +67,7 @@ public class Paragraph extends Div<Paragraph> {
      */
     public Paragraph(Double width, Double height) {
         this();
-        setWidth(width)
-                .setHeight(height);
+        setWidth(width).setHeight(height);
     }
 
     /**
@@ -84,6 +83,43 @@ public class Paragraph extends Div<Paragraph> {
         this.contents = new LinkedList<>();
         this.lines = new LinkedList<>();
     }
+
+    /**
+     * 创建绝对定位段落对象
+     *
+     * @param x      固定布局的盒式模型左上角X坐标
+     * @param y      固定布局的盒式模型左上角y坐标
+     * @param width  宽度
+     * @param height 高度
+     */
+    public Paragraph(double x, double y, double width, double height) {
+        super(x, y, width, height);
+        this.contents = new LinkedList<>();
+        this.lines = new LinkedList<>();
+    }
+
+    /**
+     * 创建绝对定位段落对象
+     *
+     * @param x        固定布局的盒式模型左上角X坐标
+     * @param y        固定布局的盒式模型左上角y坐标
+     * @param width    宽度
+     * @param height   高度
+     * @param text     文本内容
+     * @param fontSize 字号
+     */
+    public Paragraph(double x, double y, double width, double height, String text, double fontSize) {
+        super(x, y, width, height);
+        if (text == null) {
+            throw new IllegalArgumentException("文字内容为null");
+        }
+        this.contents = new LinkedList<>();
+        this.lines = new LinkedList<>();
+
+        this.setFontSize(fontSize);
+        this.add(text);
+    }
+
 
     /**
      * 新建一个段落对象
@@ -538,14 +574,9 @@ public class Paragraph extends Div<Paragraph> {
                 .sum();
         // 设置元素高度，如果元素已经预设高度那么则不设置
         setHeightIfNotExist(height);
-        // clean=both:
-        //  - 宽度: 固定值 widthLimit
-        // clean!=both:
-        //  - 宽度 = null: lineMaxAvailableWidth
+        //  - 宽度 = null: 最长行宽度
         //  - 宽度 != null: 区间 [宽度, widthLimit]
-        if (this.getClear() == Clear.both) {
-            setWidth(widthLimit);
-        } else if (this.getClear() != Clear.both && originW == null) {
+        if (originW == null) {
             double maxWidth = lines.stream().mapToDouble(TxtLineBlock::getWidth).max().getAsDouble();
             setWidth(maxWidth);
         } else {

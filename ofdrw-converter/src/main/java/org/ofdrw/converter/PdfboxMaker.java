@@ -1,12 +1,12 @@
 package org.ofdrw.converter;
 
-import org.apache.fontbox.ttf.TrueTypeFont;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.*;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.common.filespecification.PDComplexFileSpecification;
+import org.apache.pdfbox.pdmodel.common.filespecification.PDEmbeddedFile;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
 import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
@@ -17,6 +17,7 @@ import org.ofdrw.converter.point.TextCodePoint;
 import org.ofdrw.converter.utils.CommonUtil;
 import org.ofdrw.converter.utils.PointUtil;
 import org.ofdrw.core.annotation.pageannot.Annot;
+import org.ofdrw.core.attachment.CT_Attachment;
 import org.ofdrw.core.basicStructure.pageObj.layer.CT_Layer;
 import org.ofdrw.core.basicStructure.pageObj.layer.PageBlockType;
 import org.ofdrw.core.basicStructure.pageObj.layer.block.*;
@@ -46,18 +47,19 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
-import java.util.List;
 
-import static org.ofdrw.converter.utils.CommonUtil.*;
+import static org.ofdrw.converter.utils.CommonUtil.convertPDColor;
+import static org.ofdrw.converter.utils.CommonUtil.converterDpi;
 
 
 /**
  * PDFBox实现的PDF转换实现
- *
- * @deprecated see {@link ItextMaker}
  */
-@Deprecated
 public class PdfboxMaker {
 
     private static final Logger logger = LoggerFactory.getLogger(PdfboxMaker.class);
@@ -77,10 +79,7 @@ public class PdfboxMaker {
      * 用于获取OFD内资源
      */
     private final ResourceManage resMgt;
-    /**
-     * 默认字体，在无法找到可用字体时使用该字体替换
-     */
-    private final PDType0Font DEFAULT_FONT;
+
 
     /**
      * 字体缓存防止重复加载字体
@@ -94,7 +93,6 @@ public class PdfboxMaker {
         this.reader = reader;
         this.pdf = pdf;
         this.resMgt = reader.getResMgt();
-        this.DEFAULT_FONT = PDType0Font.load(pdf, this.getClass().getClassLoader().getResourceAsStream("fonts/simsun.ttf"));
     }
 
     /**
@@ -592,6 +590,47 @@ public class PdfboxMaker {
     }
 
     /**
+     * 添加附件
+     *
+     * @param ofdReader OFD解析器
+     * @throws IOException IO异常
+     */
+    public void addAttachments(OFDReader ofdReader) throws IOException {
+        // 获取OFD中所有附件
+        List<CT_Attachment> attachmentList = ofdReader.getAttachmentList();
+        if (attachmentList == null || attachmentList.isEmpty()) {
+            return;
+        }
+        PDEmbeddedFilesNameTreeNode efTree = new PDEmbeddedFilesNameTreeNode();
+        Map<String, PDComplexFileSpecification> efMap = new HashMap<>();
+        for (CT_Attachment attachment : attachmentList) {
+            PDComplexFileSpecification fs = new PDComplexFileSpecification();
+            Path attFile = ofdReader.getAttachmentFile(attachment);
+            // 文件名传
+            fs.setFile(attFile.getFileName().toString());
+
+            // 文件流，该流将由PDEmbeddedFile内部关闭
+            PDEmbeddedFile ef = new PDEmbeddedFile(pdf, Files.newInputStream(attFile));
+            // 文件类型
+            ef.setSubtype(attachment.getFormat());
+            ef.setSize((int) Files.size(attFile));
+            // 设置创建时间
+            LocalDateTime creationDate = attachment.getCreationDateTime();
+            Date date = Date.from(creationDate.atZone(ZoneId.systemDefault()).toInstant());
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(date);
+            ef.setCreationDate(calendar);
+
+            fs.setEmbeddedFile(ef);
+            efMap.put(attachment.getAttachmentName(), fs);
+        }
+        efTree.setNames(efMap);
+        PDDocumentNameDictionary names = new PDDocumentNameDictionary(pdf.getDocumentCatalog());
+        names.setEmbeddedFiles(efTree);
+        pdf.getDocumentCatalog().setNames(names);
+    }
+
+    /**
      * 加载字体
      *
      * @param ctFont 字体对象
@@ -602,16 +641,15 @@ public class PdfboxMaker {
         if (fontCache.containsKey(key)) {
             return fontCache.get(key);
         }
-        PDFont font;
         try {
             // 加载字体
-            final InputStream in = FontLoader.getInstance().loadFontSimilarStream(reader.getResourceLocator(), ctFont);
-            font = PDType0Font.load(pdf, in, true);
+            InputStream in = FontLoader.getInstance().loadFontSimilarStream(reader.getResourceLocator(), ctFont);
+            PDFont  font = PDType0Font.load(pdf, in, true);
+            fontCache.put(key, font);
+            return font;
         } catch (Exception e) {
             logger.info("无法使用字体: {} {} {}", ctFont.getFamilyName(), ctFont.getFontName(), ctFont.getFontFile().toString());
-            font = DEFAULT_FONT;
+            return PDType1Font.HELVETICA_BOLD;
         }
-        fontCache.put(key, font);
-        return font;
     }
 }

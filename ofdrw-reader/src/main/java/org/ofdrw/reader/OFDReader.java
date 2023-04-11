@@ -125,7 +125,7 @@ public class OFDReader implements Closeable {
     /**
      * 构造一个 OFDReader
      *
-     * @param stream OFD文件输入流
+     * @param stream OFD文件输入流，流由调用者负责关闭。
      * @throws IOException OFD文件操作IO异常
      */
     public OFDReader(InputStream stream) throws IOException {
@@ -496,7 +496,10 @@ public class OFDReader implements Closeable {
                 pageArea = commonData.getPageArea();
             }
         }
-        if (pageArea == null) return null;
+        if (pageArea == null) {
+            // 当无法找到区域时，使用A4大小，以兼容防止后续解析NPE。
+            return new ST_Box(0, 0, 210d, 297d);
+        }
         return pageArea.getBox();
     }
 
@@ -617,7 +620,6 @@ public class OFDReader implements Closeable {
      * 注意：该文件会在Close Reader时候被删除，请在之前复制到其他地方
      *
      * @param attachment 附件信息
-     *
      * @return 附件文件路径
      */
     public Path getAttachmentFile(CT_Attachment attachment) {

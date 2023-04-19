@@ -11,7 +11,9 @@ import org.ofdrw.layout.OFDDoc;
 import org.ofdrw.layout.PageLayout;
 import org.ofdrw.layout.VirtualPage;
 import org.ofdrw.layout.element.Position;
+import org.ofdrw.pkg.tool.ElemCup;
 
+import java.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,6 +25,159 @@ import java.nio.file.Paths;
  * @since 2020-05-02 18:25:25
  */
 class DrawContextTest {
+
+    @Test
+    public void testCreatePattern() throws IOException{
+        ElemCup.ENABLE_DEBUG_PRINT = true;
+        Path outP = Paths.get("target/CreatePattern.ofd");
+        Path img = Paths.get("src/test/resources/lamp.jpg");
+        try (OFDDoc ofdDoc = new OFDDoc(outP)) {
+            final PageLayout pageLayout = ofdDoc.getPageLayout();
+            VirtualPage vPage = new VirtualPage(pageLayout);
+            Canvas canvas = new Canvas(pageLayout.getWidth(), pageLayout.getHeight());
+            canvas.setPosition(Position.Absolute).setX(0D).setY(0D);
+            canvas.setDrawer(ctx -> {
+                CanvasPattern pattern = ctx.createPattern(img, "repeat");
+                ctx.fillStyle = pattern;
+                ctx.fillRect(0, 0, 30, 30);
+            });
+            vPage.add(canvas);
+            ofdDoc.addVPage(vPage);
+        }
+        System.out.println(">> 生成文档位置：" + outP.toAbsolutePath());
+    }
+
+    @Test
+    public void testCreatePatternSize() throws IOException{
+        ElemCup.ENABLE_DEBUG_PRINT = true;
+        Path outP = Paths.get("target/CreatePatternSize.ofd");
+        Path img = Paths.get("src/test/resources/lamp.jpg");
+        try (OFDDoc ofdDoc = new OFDDoc(outP)) {
+            final PageLayout pageLayout = ofdDoc.getPageLayout();
+            VirtualPage vPage = new VirtualPage(pageLayout);
+            Canvas canvas = new Canvas(pageLayout.getWidth(), pageLayout.getHeight());
+            canvas.setPosition(Position.Absolute).setX(0D).setY(0D);
+            canvas.setDrawer(ctx -> {
+                CanvasPattern pattern = ctx.createPattern(img, "repeat");
+                pattern.setImageSize(10, 10);
+                ctx.fillStyle = pattern;
+                ctx.fillRect(0, 0, 30, 30);
+            });
+            vPage.add(canvas);
+            ofdDoc.addVPage(vPage);
+        }
+        System.out.println(">> 生成文档位置：" + outP.toAbsolutePath());
+    }
+
+    @Test
+    public void testCreatePatternStyle2() throws IOException{
+        ElemCup.ENABLE_DEBUG_PRINT = true;
+        Path outP = Paths.get("target/CreatePattern2.ofd");
+        Path img = Paths.get("src/test/resources/lamp.jpg");
+        try (OFDDoc ofdDoc = new OFDDoc(outP)) {
+            final PageLayout pageLayout = ofdDoc.getPageLayout();
+            VirtualPage vPage = new VirtualPage(pageLayout);
+            Canvas canvas = new Canvas(pageLayout.getWidth(), pageLayout.getHeight());
+            canvas.setPosition(Position.Absolute).setX(0D).setY(0D);
+            canvas.setDrawer(ctx -> {
+                CanvasPattern pattern = ctx.createPattern(img, "row-column");
+                ctx.fillStyle = pattern;
+                ctx.fillRect(0, 0, 30, 30);
+            });
+            vPage.add(canvas);
+            ofdDoc.addVPage(vPage);
+        }
+        System.out.println(">> 生成文档位置：" + outP.toAbsolutePath());
+    }
+
+    @Test
+    public void testCreatePatternCTM() throws IOException{
+        ElemCup.ENABLE_DEBUG_PRINT = true;
+        Path outP = Paths.get("target/CreatePatternCTM.ofd");
+        Path img = Paths.get("src/test/resources/lamp.jpg");
+        try (OFDDoc ofdDoc = new OFDDoc(outP)) {
+            final PageLayout pageLayout = ofdDoc.getPageLayout();
+            VirtualPage vPage = new VirtualPage(pageLayout);
+            Canvas canvas = new Canvas(pageLayout.getWidth(), pageLayout.getHeight());
+            canvas.setPosition(Position.Absolute).setX(0D).setY(0D);
+            canvas.setDrawer(ctx -> {
+                AffineTransform matrix = new AffineTransform();
+                CanvasPattern pattern = ctx.createPattern(img, "repeat");
+                matrix.rotate(-45);
+                matrix.scale(5d,5d);
+                pattern.setTransform(matrix);
+                ctx.fillStyle = pattern;
+                ctx.fillRect(0, 0, 30, 30);
+            });
+            vPage.add(canvas);
+            ofdDoc.addVPage(vPage);
+        }
+        System.out.println(">> 生成文档位置：" + outP.toAbsolutePath());
+    }
+
+    @Test
+    public void testCreateLinearGradient() throws IOException {
+        ElemCup.ENABLE_DEBUG_PRINT = true;
+        Path outP = Paths.get("target/CreateLinearGradient.ofd");
+        try (OFDDoc ofdDoc = new OFDDoc(outP)) {
+            final PageLayout pageLayout = ofdDoc.getPageLayout();
+            VirtualPage vPage = new VirtualPage(pageLayout);
+            Canvas canvas = new Canvas(pageLayout.getWidth(), pageLayout.getHeight());
+            canvas.setPosition(Position.Absolute).setX(0D).setY(0D);
+            canvas.setDrawer(ctx -> {
+
+                CanvasGradient my_gradient = ctx.createLinearGradient(0, 0, 170, 0);
+                my_gradient.addColorStop(0, "black");
+                my_gradient.addColorStop(0.5, "red");
+                my_gradient.addColorStop(1, "white");
+                ctx.fillStyle = my_gradient;
+                ctx.fillRect(20, 20, 150, 100);
+
+            });
+            vPage.add(canvas);
+            ofdDoc.addVPage(vPage);
+        }
+        System.out.println(">> 生成文档位置：" + outP.toAbsolutePath());
+    }
+
+    @Test
+    public void testFillStyle() throws IOException {
+        ElemCup.ENABLE_DEBUG_PRINT = true;
+        Path outP = Paths.get("target/FillStyle.ofd");
+        try (OFDDoc ofdDoc = new OFDDoc(outP)) {
+            final PageLayout pageLayout = ofdDoc.getPageLayout();
+            VirtualPage vPage = new VirtualPage(pageLayout);
+            Canvas canvas = new Canvas(pageLayout.getWidth(), pageLayout.getHeight());
+            canvas.setPosition(Position.Absolute).setX(0D).setY(0D);
+            canvas.setDrawer(ctx -> {
+                ctx.fillStyle = "#FF0000";
+                ctx.fillRect(20, 20, 150, 100);
+            });
+            vPage.add(canvas);
+            ofdDoc.addVPage(vPage);
+        }
+        ;
+        System.out.println(">> 生成文档位置：" + outP.toAbsolutePath());
+    }
+
+    @Test
+    public void testStrokeStyle() throws IOException {
+        ElemCup.ENABLE_DEBUG_PRINT = true;
+        Path outP = Paths.get("target/StrokeStyle.ofd");
+        try (OFDDoc ofdDoc = new OFDDoc(outP)) {
+            final PageLayout pageLayout = ofdDoc.getPageLayout();
+            VirtualPage vPage = new VirtualPage(pageLayout);
+            Canvas canvas = new Canvas(pageLayout.getWidth(), pageLayout.getHeight());
+            canvas.setPosition(Position.Absolute).setX(0D).setY(0D);
+            canvas.setDrawer(ctx -> {
+                ctx.strokeStyle = "#FF0000";
+                ctx.strokeRect(20, 20, 150, 100);
+            });
+            vPage.add(canvas);
+            ofdDoc.addVPage(vPage);
+        }
+        System.out.println(">> 生成文档位置：" + outP.toAbsolutePath());
+    }
 
     @Test
     public void testLineTo() throws IOException {
@@ -429,6 +584,53 @@ class DrawContextTest {
         }
         System.out.println("生成文档位置：" + outP.toAbsolutePath().toString());
     }
+
+
+    @Test
+    void drawImagePart() throws IOException {
+        Path outP = Paths.get("target/drawImage_part.ofd");
+        Path imgPath = Paths.get("src/test/resources/rhino.jpg");
+        try (OFDDoc ofdDoc = new OFDDoc(outP)) {
+            PageLayout pageLayout = ofdDoc.getPageLayout();
+            VirtualPage vPage = new VirtualPage(pageLayout);
+            Canvas canvas = new Canvas(pageLayout.getWidth(), pageLayout.getHeight());
+            canvas.setPosition(Position.Absolute).setXY(0d, 0d);
+
+            canvas.setDrawer(ctx -> {
+                ctx.PPM = 1d;
+                ctx.drawImage(imgPath,
+                        ctx.mm(33), ctx.mm(71), ctx.mm(104), ctx.mm(124),
+                        ctx.mm(21), ctx.mm(20), ctx.mm(87), ctx.mm(104)
+                );
+            });
+            vPage.add(canvas);
+
+            ofdDoc.addVPage(vPage);
+        }
+        System.out.println("生成文档位置：" + outP.toAbsolutePath());
+    }
+
+    @Test
+    void drawImageLeftTop() throws IOException {
+        Path outP = Paths.get("target/drawImage_left_top.ofd");
+        Path imgPath = Paths.get("src/test/resources/rhino.jpg");
+        try (OFDDoc ofdDoc = new OFDDoc(outP)) {
+            PageLayout pageLayout = ofdDoc.getPageLayout();
+            VirtualPage vPage = new VirtualPage(pageLayout);
+            Canvas canvas = new Canvas(pageLayout.getWidth(), pageLayout.getHeight());
+            canvas.setPosition(Position.Absolute).setXY(0d, 0d);
+
+            canvas.setDrawer(ctx -> {
+                ctx.PPM = 3d;
+                ctx.drawImage(imgPath, 0, 0);
+            });
+            vPage.add(canvas);
+
+            ofdDoc.addVPage(vPage);
+        }
+        System.out.println("生成文档位置：" + outP.toAbsolutePath());
+    }
+
 
     @Test
     void drawImage2() throws IOException {
@@ -1012,7 +1214,7 @@ class DrawContextTest {
     }
 
     @Test
-    public void testTransform()  {
+    public void testTransform() {
         // 平移
         AbbreviatedData at = new AbbreviatedData();
         at.moveTo(0, 0);

@@ -13,6 +13,10 @@ import java.util.function.Function;
  */
 public abstract class STBase implements Serializable {
 
+    /**
+     * 最大保留小数有效位数
+     */
+    public static int MAX_KEEP_DECIMAL = 3;
 
     /**
      * 使用简单类型创建一个指定名称的元素
@@ -28,6 +32,9 @@ public abstract class STBase implements Serializable {
      * 如果浮点数为整数，则省略小数
      * <p>
      * 浮点数含有小数，那么对保留3位有效小数
+     * <p>
+     * 可以通过 {@link #MAX_KEEP_DECIMAL} 修改最大保留小数位数，非特殊情况不建议修改。
+     * 若数值小于10^-8，那么则认为为0
      *
      * @param d 浮点数
      * @return 数字字符串
@@ -47,14 +54,14 @@ public abstract class STBase implements Serializable {
                 if (c - '0' <= 0) {
                     continue;
                 }
-                if (i + 3 <= len) {
-                    return str.substring(0, i + 3);
+                if (i + MAX_KEEP_DECIMAL <= len) {
+                    return str.substring(0, i + MAX_KEEP_DECIMAL);
                 }
                 return str.substring(0, len);
             }
             return str;
-        }  else {
-            return String.format("%.3f", d);
+        } else {
+            return String.format("%." + MAX_KEEP_DECIMAL + "f", d);
         }
     }
 

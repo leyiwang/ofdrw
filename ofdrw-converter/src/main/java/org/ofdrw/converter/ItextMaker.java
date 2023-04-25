@@ -310,7 +310,7 @@ public class ItextMaker {
                         CT_AxialShd ctAxialShd = ctFillColor.getColorByType();
                         fillColor = ColorConvert.pdfRGB(resMgt, ctAxialShd.getSegments().get(0).getColor());
                     }
-                    alpha = ctFillColor.getAlpha();
+                    alpha = textObject.getAlpha();
                 }
                 //TODO 修复annot中的文字注解的定位
                 writeText(resMgt, pdfCanvas, box, sealBox, annotBox, textObject, fillColor, alpha, compositeObjectAlpha, compositeObjectBoundary, compositeObjectCTM);
